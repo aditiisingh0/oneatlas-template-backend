@@ -1,0 +1,42 @@
+{
+  "name": "@oneatlas/templates",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": "./dist/types/index.js",
+    "./registry": "./dist/registry/index.js",
+    "./loader": "./dist/loader/index.js",
+    "./composer": "./dist/composer/index.js",
+    "./spec-engine": "./dist/spec-engine/index.js",
+    "./preview": "./dist/preview/index.js",
+    "./deployment": "./dist/deployment/index.js",
+    "./workflows": "./dist/workflows/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "^3.23.0",
+    "ts-morph": "^22.0.0",
+    "esbuild": "^0.21.0",
+    "@upstash/redis": "^1.31.0",
+    "@anthropic-ai/sdk": "^0.24.0",
+    "uuid": "^10.0.0",
+    "prettier": "^3.3.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "vitest": "^1.6.0",
+    "@types/uuid": "^10.0.0"
+  }
+}
