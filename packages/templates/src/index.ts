@@ -61,3 +61,23 @@ export type { GenerateOptions, PipelineResult } from './pipeline.js';
 // HTTP API Server (Team 2 integration)
 export { createApiServer } from './api/server.js';
 export type { AppUnderstanding } from './api/server.js';
+
+// Monitoring (Error Tracking + Metrics + Health)
+export {
+  initErrorTracking,
+  captureError,
+  captureMessage,
+  setUserContext,
+  clearUserContext,
+  sentryRequestMiddleware,
+  errorHandler,
+  incrementCounter,
+  recordHistogram,
+  setGauge,
+  requestMetricsMiddleware,
+  registerHealthCheck,
+  registerDefaultHealthChecks,
+  createMonitoringRouter,
+  templateMetrics,
+} from './monitoring/index.js';
+export type { ErrorTrackingConfig } from './monitoring/error-tracking.js';

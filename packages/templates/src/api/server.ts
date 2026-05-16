@@ -13,6 +13,16 @@ import { deploymentEngine } from '../deployment/index.js';
 import { workflowExecutor } from '../workflows/executor.js';
 import { buildSpecFromEntities } from '../spec-engine/index.js';
 import type { EntityDef } from '../types/app-spec.js';
+import {
+  initErrorTracking,
+  sentryRequestMiddleware,
+  errorHandler,
+  captureError,
+  registerDefaultHealthChecks,
+  createMonitoringRouter,
+  requestMetricsMiddleware,
+  templateMetrics,
+} from '../monitoring/index.js';
 
 // ─── AppUnderstanding → AppSpec adapter (Team 3 contract bridge) ──────────────
 export interface AppUnderstanding {
@@ -70,7 +80,14 @@ export function createApiServer() {
   const app = express();
   app.use(express.json({ limit: '2mb' }));
 
-  // Health check
+  // ── Monitoring middleware ──────────────────────────────────────────────────
+  app.use(requestMetricsMiddleware());
+  app.use(sentryRequestMiddleware());
+
+  // ── Health + metrics routes ────────────────────────────────────────────────
+  app.use(createMonitoringRouter());
+
+  // Legacy health check (keep for backwards compat)
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', service: 'oneatlas-template-backend', ts: new Date().toISOString() });
   });
@@ -84,6 +101,8 @@ export function createApiServer() {
       if (!tenantId) return res.status(400).json({ error: 'tenantId is required' });
       if (!userPrompt && !entities) return res.status(400).json({ error: 'userPrompt or entities required' });
 
+      const _genStart = Date.now();
+      templateMetrics.generationStarted(appType ?? 'crud');
       const result = await runGenerationPipeline({
         tenantId,
         userPrompt,
@@ -93,6 +112,7 @@ export function createApiServer() {
         existingManifestJson,
         existingSpec,
       });
+      templateMetrics.generationCompleted(appType ?? 'crud', Date.now() - _genStart);
 
       res.status(200).json({
         appId: result.spec.id,
@@ -261,18 +281,26 @@ export function createApiServer() {
     res.json({ run });
   });
 
-  // ── Error handler ─────────────────────────────────────────────────────────────
-  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
-    const message = err instanceof Error ? err.message : 'Internal server error';
-    console.error('[Template API Error]', err);
-    res.status(500).json({ error: message });
-  });
+  // ── Error handler (Sentry-aware) ──────────────────────────────────────────
+  app.use(errorHandler());
 
   return app;
 }
 
 // ─── Standalone entrypoint ────────────────────────────────────────────────────
 if (process.env['NODE_ENV'] !== 'test') {
+  // Init error tracking if DSN is configured
+  const sentryDsn = process.env['SENTRY_DSN'];
+  if (sentryDsn) {
+    initErrorTracking({
+      dsn: sentryDsn,
+      environment: process.env['NODE_ENV'] ?? 'development',
+      release: process.env['npm_package_version'],
+    });
+  }
+
+  registerDefaultHealthChecks();
+
   const PORT = parseInt(process.env['PORT'] ?? '4001', 10);
   const app = createApiServer();
   app.listen(PORT, () => {
