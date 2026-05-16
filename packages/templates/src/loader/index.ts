@@ -5,6 +5,13 @@ import { resolveTemplate, getTemplate } from '../registry/index.js';
 import { computeSlotValues, generateFullPrismaSchema } from './code-generator.js';
 import { generateFileFromTemplate, smartPatch, resolveFilePath, sha256 } from './ast-patcher.js';
 import { listCreateTemplate, getUpdateDeleteTemplate } from '../registry/templates/crud/api/handlers.js';
+import { listPageTemplate, detailPageTemplate, formPageTemplate } from '../registry/templates/crud/pages/index.js';
+import { dashboardMainTemplate } from '../registry/templates/dashboard/pages/index.js';
+import { dashboardStatsTemplate } from '../registry/templates/dashboard/api/index.js';
+import { workflowListTemplate } from '../registry/templates/workflow/pages/index.js';
+import { workflowTriggerTemplate, workflowExecuteTemplate } from '../registry/templates/workflow/api/index.js';
+import { adminListTemplate, adminUsersTemplate } from '../registry/templates/admin-panel/pages/index.js';
+import { adminCrudTemplate, adminAuditLogTemplate } from '../registry/templates/admin-panel/api/index.js';
 import type { AppSpec } from '../types/app-spec.js';
 import { generateHydrationManifest, generateHydrationModule } from './hydration.js';
 import { generateComponentRegistryModule, generateDynamicListPageShell, generateDynamicDetailPageShell, generateDynamicFormPageShell } from './component-registry.js';
@@ -12,9 +19,25 @@ import type { RenderManifest, GeneratedFile } from '../types/render-manifest.js'
 
 // ─── Template source map — maps templateSource key → actual template string ───
 const TEMPLATE_SOURCES: Record<string, string> = {
+  // CRUD pages
+  'crud/pages/list': listPageTemplate,
+  'crud/pages/detail': detailPageTemplate,
+  'crud/pages/form': formPageTemplate,
+  // CRUD API
   'crud/api/list-create': listCreateTemplate,
   'crud/api/get-update-delete': getUpdateDeleteTemplate,
-  // Add more as templates expand
+  // Dashboard
+  'dashboard/pages/main': dashboardMainTemplate,
+  'dashboard/api/stats': dashboardStatsTemplate,
+  // Workflow
+  'workflow/pages/list': workflowListTemplate,
+  'workflow/api/trigger': workflowTriggerTemplate,
+  'workflow/api/execute': workflowExecuteTemplate,
+  // Admin Panel
+  'admin-panel/pages/list': adminListTemplate,
+  'admin-panel/pages/users': adminUsersTemplate,
+  'admin-panel/api/crud': adminCrudTemplate,
+  'admin-panel/api/audit-log': adminAuditLogTemplate,
 };
 
 function getTemplateSource(key: string): string {

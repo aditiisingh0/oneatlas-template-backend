@@ -39,6 +39,18 @@ type StepExecutor = (
   run: WorkflowRun
 ) => Promise<{ output: unknown; outputVar?: string }>;
 
+// ─── Prisma resolver (injected by host app) ──────────────────────────────────
+type PrismaResolver = (tenantId: string, appId: string) => Promise<unknown>;
+let _prismaResolver: PrismaResolver | null = null;
+
+export function setPrismaResolver(resolver: PrismaResolver): void {
+  _prismaResolver = resolver;
+}
+
+function getPrismaResolver(): PrismaResolver | null {
+  return _prismaResolver;
+}
+
 const STEP_EXECUTORS: Partial<Record<WorkflowStep['type'], StepExecutor>> = {
   async ai(step, context) {
     if (step.type !== 'ai') throw new Error('Wrong step type');
@@ -98,6 +110,33 @@ const STEP_EXECUTORS: Partial<Record<WorkflowStep['type'], StepExecutor>> = {
     const result = evaluateCondition(step.expression, context);
     // Return branch to execute
     return { output: { branch: result ? 'true' : 'false', steps: result ? step.trueBranch : step.falseBranch } };
+  },
+
+  async db_query(step, context, run) {
+    if (step.type !== 'db_query') throw new Error('Wrong step type');
+
+    const resolver = getPrismaResolver();
+    if (!resolver) {
+      throw new Error(
+        'db_query step: no Prisma resolver registered. ' +
+        'Call setPrismaResolver(fn) before running workflows with db_query steps.'
+      );
+    }
+
+    const prisma = await resolver(run.tenantId, run.appId) as Record<string, unknown>;
+    const model = prisma[step.entity];
+    if (!model || typeof model !== 'object') {
+      throw new Error(`db_query step: entity "${step.entity}" not found in Prisma client`);
+    }
+
+    const actionFn = (model as Record<string, unknown>)[step.action];
+    if (typeof actionFn !== 'function') {
+      throw new Error(`db_query step: action "${step.action}" not found on entity "${step.entity}"`);
+    }
+
+    const resolvedParams = interpolateObject(step.params, context);
+    const result = await (actionFn as (arg: unknown) => Promise<unknown>).call(model, resolvedParams);
+    return { output: result, outputVar: step.outputVar };
   },
 };
 

@@ -46,7 +46,7 @@ export { DeploymentEngine, deploymentEngine } from './deployment/index.js';
 export type { DeployRequest, DeployResult, DeploymentRecord, DeploymentStatus } from './deployment/index.js';
 
 // Workflows
-export { WorkflowExecutor, workflowExecutor, evaluateCondition, matchesTrigger } from './workflows/executor.js';
+export { WorkflowExecutor, workflowExecutor, evaluateCondition, matchesTrigger, setPrismaResolver } from './workflows/executor.js';
 export type { WorkflowRun, StepResult } from './workflows/executor.js';
 
 // Pipeline (main entrypoints)
@@ -57,3 +57,7 @@ export {
   runIncrementalUpdate,
 } from './pipeline.js';
 export type { GenerateOptions, PipelineResult } from './pipeline.js';
+
+// HTTP API Server (Team 2 integration)
+export { createApiServer } from './api/server.js';
+export type { AppUnderstanding } from './api/server.js';
