@@ -26,17 +26,19 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "zod": "^3.23.0",
-    "ts-morph": "^22.0.0",
-    "esbuild": "^0.21.0",
-    "@upstash/redis": "^1.31.0",
     "@anthropic-ai/sdk": "^0.24.0",
+    "@upstash/redis": "^1.31.0",
+    "esbuild": "^0.21.0",
+    "express": "^5.2.1",
+    "prettier": "^3.3.0",
+    "ts-morph": "^22.0.0",
     "uuid": "^10.0.0",
-    "prettier": "^3.3.0"
+    "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/uuid": "^10.0.0",
     "tsup": "^8.0.0",
-    "vitest": "^1.6.0",
-    "@types/uuid": "^10.0.0"
+    "vitest": "^1.6.0"
   }
 }
